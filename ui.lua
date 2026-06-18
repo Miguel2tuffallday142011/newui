@@ -3069,13 +3069,6 @@ do --// UI Source
                 }
 
                 local Items = { } do
-                    if IsMobile then
-                        Library:Create("UIScale", {
-                            Parent = Items["MainFrame"],
-                            Scale = 0.67 -- funyn
-                        })
-                    end
-
                     Items["MainFrame"] = Library:Create("Frame", {
                         Name = "\0",
                         Parent = Library.Holder.Instance,
@@ -3085,6 +3078,20 @@ do --// UI Source
                         BorderSizePixel = 0,
                         BackgroundColor3 = Library.Theme["Background"]
                     }):AddToTheme({BackgroundColor3 = 'Background'})
+
+                    -- Mobile: scale down and reposition to fit screen
+                    if IsMobile then
+                        local screenH = workspace.CurrentCamera.ViewportSize.Y
+                        local uiH = 417  -- default window height
+                        local scale = math.clamp((screenH * 0.85) / uiH, 0.4, 0.75)
+                        Library:Create("UIScale", {
+                            Name = "\0",
+                            Parent = Items["MainFrame"].Instance,
+                            Scale = scale
+                        })
+                        Items["MainFrame"].Instance.AnchorPoint = Vector2.new(0, 0)
+                        Items["MainFrame"].Instance.Position = UDim2.new(0, 4, 0, 40)
+                    end
 
                     Items["MainFrame"]:MakeDraggable()
                     Items["MainFrame"]:MakeResizeable(Vector2.new(Items["MainFrame"].Instance.AbsoluteSize.X, Items["MainFrame"].Instance.AbsoluteSize.Y))
