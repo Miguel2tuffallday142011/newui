@@ -5149,7 +5149,7 @@ do --// UI Source
                         BorderSizePixel = 0
                     })
 
-                    Items["Background"] = Library:Create(IsMobile and "TextButton" or "Frame", {
+                    Items["Background"] = Library:Create("Frame", {
                         Name = "\0",
                         Parent = Items["Textbox"].Instance,
                         ClipsDescendants = true,
@@ -5159,9 +5159,7 @@ do --// UI Source
                         Selectable = true,
                         Active = true,
                         BorderSizePixel = 0,
-                        BackgroundColor3 = Library.Theme["Inline"],
-                        Text = IsMobile and "" or nil,
-                        AutoButtonColor = IsMobile and false or nil
+                        BackgroundColor3 = Library.Theme["Inline"]
                     }):AddToTheme({BackgroundColor3 = 'Inline'})
 
                     Library:Create("UIStroke", {
@@ -5245,9 +5243,19 @@ do --// UI Source
 
                 -- Mobile: ensure keyboard pops up on any touch in the area
                 if IsMobile then
-                    Items["Background"].Instance.MouseButton1Click:Connect(function()
-                        task.wait()
-                        Items["Input"].Instance:CaptureFocus()
+                    local function forceFocus(Input)
+                        if Input.UserInputType == Enum.UserInputType.Touch then
+                            Items["Input"].Instance.Active = true
+                            Items["Input"].Instance.Selectable = true
+                            task.defer(function()
+                                Items["Input"].Instance:CaptureFocus()
+                            end)
+                        end
+                    end
+                    Library:Connect(Items["Background"].Instance.InputBegan, forceFocus)
+                    Library:Connect(Items["Input"].Instance.InputBegan, forceFocus)
+                    Items["Input"]:Connect("Focused", function()
+                        Items["Input"].Instance.Active = true
                     end)
                 end
 
