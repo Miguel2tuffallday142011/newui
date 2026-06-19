@@ -5149,7 +5149,7 @@ do --// UI Source
                         BorderSizePixel = 0
                     })
 
-                    Items["Background"] = Library:Create("Frame", {
+                    Items["Background"] = Library:Create(IsMobile and "TextButton" or "Frame", {
                         Name = "\0",
                         Parent = Items["Textbox"].Instance,
                         ClipsDescendants = true,
@@ -5159,7 +5159,9 @@ do --// UI Source
                         Selectable = true,
                         Active = true,
                         BorderSizePixel = 0,
-                        BackgroundColor3 = Library.Theme["Inline"]
+                        BackgroundColor3 = Library.Theme["Inline"],
+                        Text = IsMobile and "" or nil,
+                        AutoButtonColor = IsMobile and false or nil
                     }):AddToTheme({BackgroundColor3 = 'Inline'})
 
                     Library:Create("UIStroke", {
@@ -5184,8 +5186,8 @@ do --// UI Source
                         FontFace = Library.Font,
                         TextSize = Library.FontSize,
                         Parent = Items["Background"].Instance,
-                        Active = false,
-                        Selectable = false,
+                        Active = true,
+                        Selectable = true,
                         AnchorPoint = Vector2.new(0, 0.5),
                         PlaceholderColor3 = Library.Theme["Inactive Text"],
                         PlaceholderText = Textbox.Placeholder,
@@ -5238,6 +5240,14 @@ do --// UI Source
                 else
                     Library:Connect(Items["Input"].Instance:GetPropertyChangedSignal("Text"), function()
                         Textbox:Set(Items["Input"].Instance.Text)
+                    end)
+                end
+
+                -- Mobile: ensure keyboard pops up on any touch in the area
+                if IsMobile then
+                    Items["Background"].Instance.MouseButton1Click:Connect(function()
+                        task.wait()
+                        Items["Input"].Instance:CaptureFocus()
                     end)
                 end
 
