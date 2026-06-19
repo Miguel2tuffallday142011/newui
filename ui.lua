@@ -29,7 +29,7 @@ do --// UI Source
         Flags = { },
         MenuKeybind = tostring(Enum.KeyCode.X),
 
-        Directory = "cipher.win",
+        Directory = "Radiance",
         Folders = {
             Assets = "/Assets",
             Configs = "/Configs"
@@ -5273,63 +5273,46 @@ do --// UI Source
                             end
                         })
 
-                        -- Add spacer
-                        local spacer = Instance.new("Frame")
-                        spacer.Size = UDim2.new(1, 0, 0, 4)
-                        spacer.BackgroundTransparency = 1
-                        spacer.Parent = ConfigsSection.Items["Section"].Instance
+                        ConfigsSection:Textbox({
+                            Flag = "config_name",
+                            Placeholder = "",
+                            Callback = function(Value)
+                                ConfigName = Value
+                            end
+                        })
 
-                        -- Custom working textbox (like player search)
-                        local cfgNameFrame = Instance.new("Frame")
-                        cfgNameFrame.Size = UDim2.new(1, -8, 0, 20)
-                        cfgNameFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-                        cfgNameFrame.BorderSizePixel = 0
-                        cfgNameFrame.Parent = ConfigsSection.Items["Section"].Instance
-
-                        local cfgStroke = Instance.new("UIStroke")
-                        cfgStroke.Color = Color3.fromRGB(60, 60, 70)
-                        cfgStroke.Parent = cfgNameFrame
-
-                        local cfgNameBox = Instance.new("TextBox")
-                        cfgNameBox.Size = UDim2.new(1, -12, 1, 0)
-                        cfgNameBox.Position = UDim2.new(0, 6, 0, 0)
-                        cfgNameBox.BackgroundTransparency = 1
-                        cfgNameBox.Text = ""
-                        cfgNameBox.PlaceholderText = "config name..."
-                        cfgNameBox.TextColor3 = Color3.fromRGB(200, 200, 200)
-                        cfgNameBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
-                        cfgNameBox.TextSize = 11
-                        cfgNameBox.Font = Enum.Font.Gotham
-                        cfgNameBox.TextXAlignment = Enum.TextXAlignment.Left
-                        cfgNameBox.ClearTextOnFocus = false
-                        cfgNameBox.Active = true
-                        cfgNameBox.Selectable = true
-                        cfgNameBox.Parent = cfgNameFrame
-
+                        -- Mobile-friendly preset config buttons
                         if IsMobile then
-                            cfgNameBox.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.Touch then
-                                    cfgNameBox.Active = true
-                                    cfgNameBox.Selectable = true
-                                    task.defer(function()
-                                        cfgNameBox:CaptureFocus()
-                                    end)
+                            ConfigsSection:Button({
+                                Name = "quick save (mobile1)",
+                                Callback = function()
+                                    local name = "mobile1"
+                                    writefile(ConfigsFolder .. name .. ".json", Library:GetConfig())
+                                    Library:GetConfigsList(ConfigsDropdown)
+                                    Library:Notification{Name = "saved to " .. name, Time = 3}
                                 end
-                            end)
-                            cfgNameFrame.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.Touch then
-                                    cfgNameBox.Active = true
-                                    cfgNameBox.Selectable = true
-                                    task.defer(function()
-                                        cfgNameBox:CaptureFocus()
-                                    end)
-                                end
-                            end)
-                        end
+                            })
 
-                        cfgNameBox:GetPropertyChangedSignal("Text"):Connect(function()
-                            ConfigName = cfgNameBox.Text
-                        end)
+                            ConfigsSection:Button({
+                                Name = "quick save (mobile2)",
+                                Callback = function()
+                                    local name = "mobile2"
+                                    writefile(ConfigsFolder .. name .. ".json", Library:GetConfig())
+                                    Library:GetConfigsList(ConfigsDropdown)
+                                    Library:Notification{Name = "saved to " .. name, Time = 3}
+                                end
+                            })
+
+                            ConfigsSection:Button({
+                                Name = "quick save (mobile3)",
+                                Callback = function()
+                                    local name = "mobile3"
+                                    writefile(ConfigsFolder .. name .. ".json", Library:GetConfig())
+                                    Library:GetConfigsList(ConfigsDropdown)
+                                    Library:Notification{Name = "saved to " .. name, Time = 3}
+                                end
+                            })
+                        end
 
                         ConfigsSection:Button({
                             Name = "create",
