@@ -29,7 +29,7 @@ do --// UI Source
         Flags = { },
         MenuKeybind = tostring(Enum.KeyCode.X),
 
-        Directory = "Radiance",
+        Directory = "cipher.win",
         Folders = {
             Assets = "/Assets",
             Configs = "/Configs"
@@ -5273,13 +5273,57 @@ do --// UI Source
                             end
                         })
 
-                        ConfigsSection:Textbox({
-                            Flag = "config_name",
-                            Placeholder = "",
-                            Callback = function(Value)
-                                ConfigName = Value
-                            end
-                        })
+                        -- Custom working textbox (like player search)
+                        local cfgNameFrame = Instance.new("Frame")
+                        cfgNameFrame.Size = UDim2.new(1, -8, 0, 20)
+                        cfgNameFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+                        cfgNameFrame.BorderSizePixel = 0
+                        cfgNameFrame.Parent = ConfigsSection.Items["Content"].Instance
+
+                        local cfgStroke = Instance.new("UIStroke")
+                        cfgStroke.Color = Color3.fromRGB(60, 60, 70)
+                        cfgStroke.Parent = cfgNameFrame
+
+                        local cfgNameBox = Instance.new("TextBox")
+                        cfgNameBox.Size = UDim2.new(1, -12, 1, 0)
+                        cfgNameBox.Position = UDim2.new(0, 6, 0, 0)
+                        cfgNameBox.BackgroundTransparency = 1
+                        cfgNameBox.Text = ""
+                        cfgNameBox.PlaceholderText = "config name..."
+                        cfgNameBox.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        cfgNameBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+                        cfgNameBox.TextSize = 11
+                        cfgNameBox.Font = Enum.Font.Gotham
+                        cfgNameBox.TextXAlignment = Enum.TextXAlignment.Left
+                        cfgNameBox.ClearTextOnFocus = false
+                        cfgNameBox.Active = true
+                        cfgNameBox.Selectable = true
+                        cfgNameBox.Parent = cfgNameFrame
+
+                        if IsMobile then
+                            cfgNameBox.InputBegan:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.Touch then
+                                    cfgNameBox.Active = true
+                                    cfgNameBox.Selectable = true
+                                    task.defer(function()
+                                        cfgNameBox:CaptureFocus()
+                                    end)
+                                end
+                            end)
+                            cfgNameFrame.InputBegan:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.Touch then
+                                    cfgNameBox.Active = true
+                                    cfgNameBox.Selectable = true
+                                    task.defer(function()
+                                        cfgNameBox:CaptureFocus()
+                                    end)
+                                end
+                            end)
+                        end
+
+                        cfgNameBox:GetPropertyChangedSignal("Text"):Connect(function()
+                            ConfigName = cfgNameBox.Text
+                        end)
 
                         ConfigsSection:Button({
                             Name = "create",
