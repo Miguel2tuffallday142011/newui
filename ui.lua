@@ -5273,12 +5273,18 @@ do --// UI Source
                             end
                         })
 
+                        -- Add spacer
+                        local spacer = Instance.new("Frame")
+                        spacer.Size = UDim2.new(1, 0, 0, 4)
+                        spacer.BackgroundTransparency = 1
+                        spacer.Parent = ConfigsSection.Items["Section"].Instance
+
                         -- Custom working textbox (like player search)
                         local cfgNameFrame = Instance.new("Frame")
                         cfgNameFrame.Size = UDim2.new(1, -8, 0, 20)
                         cfgNameFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
                         cfgNameFrame.BorderSizePixel = 0
-                        cfgNameFrame.Parent = ConfigsSection.Items["Content"].Instance
+                        cfgNameFrame.Parent = ConfigsSection.Items["Section"].Instance
 
                         local cfgStroke = Instance.new("UIStroke")
                         cfgStroke.Color = Color3.fromRGB(60, 60, 70)
