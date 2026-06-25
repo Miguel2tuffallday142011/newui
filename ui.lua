@@ -185,36 +185,47 @@ local function SetDraggable(self: GuiObject)
     local DragOrigin
     local GuiOrigin
 
-    self.InputBegan:Connect(function(Input: InputObject, Process: boolean)
-        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1) then
-            for _, v in ipairs(Draggables) do
-                v.ZIndex = 1
-            end
+    local function BeginDrag(Input)
+        if not Dragging.Gui and not Dragging.True then
+            for _, v in ipairs(Draggables) do v.ZIndex = 1 end
             self.ZIndex = 2
-
             Dragging = {Gui = self, True = true}
             DragOrigin = Vector2.new(Input.Position.X, Input.Position.Y)
             GuiOrigin = self.Position
+        end
+    end
+
+    local function MoveDrag(Input)
+        if Dragging.Gui ~= self then return end
+        local Delta = Vector2.new(Input.Position.X, Input.Position.Y) - DragOrigin
+        local ScreenSize = Menu.ScreenSize
+        local ScaleX = ScreenSize.X * GuiOrigin.X.Scale
+        local ScaleY = ScreenSize.Y * GuiOrigin.Y.Scale
+        local OffsetX = math.clamp(GuiOrigin.X.Offset + Delta.X + ScaleX, 0, ScreenSize.X - self.AbsoluteSize.X)
+        local OffsetY = math.clamp(GuiOrigin.Y.Offset + Delta.Y + ScaleY, -36, ScreenSize.Y - self.AbsoluteSize.Y)
+        self.Position = UDim2.fromOffset(OffsetX, OffsetY)
+    end
+
+    self.InputBegan:Connect(function(Input: InputObject, Process: boolean)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+            BeginDrag(Input)
         end
     end)
 
     UserInput.InputChanged:Connect(function(Input: InputObject, Process: boolean)
         if Dragging.Gui ~= self then return end
-        if not (UserInput:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)) then
-            Dragging = {Gui = nil, True = false}
-            return
+        if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
+            if not UserInput:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and not (Input.UserInputType == Enum.UserInputType.Touch) then
+                Dragging = {Gui = nil, True = false}
+                return
+            end
+            MoveDrag(Input)
         end
-        if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
-            local Delta = Vector2.new(Input.Position.X, Input.Position.Y) - DragOrigin
-            local ScreenSize = Menu.ScreenSize
+    end)
 
-            local ScaleX = (ScreenSize.X * GuiOrigin.X.Scale)
-            local ScaleY = (ScreenSize.Y * GuiOrigin.Y.Scale)
-            local OffsetX = math.clamp(GuiOrigin.X.Offset + Delta.X + ScaleX,   0, ScreenSize.X - self.AbsoluteSize.X)
-            local OffsetY = math.clamp(GuiOrigin.Y.Offset + Delta.Y + ScaleY, -36, ScreenSize.Y - self.AbsoluteSize.Y)
-            
-            local Position = UDim2.fromOffset(OffsetX, OffsetY)
-			self.Position = Position
+    UserInput.InputEnded:Connect(function(Input: InputObject)
+        if Input.UserInputType == Enum.UserInputType.Touch and Dragging.Gui == self then
+            Dragging = {Gui = nil, True = false}
         end
     end)
 end
@@ -265,7 +276,7 @@ MenuScaler_Button.AutoButtonColor = false
 MenuScaler_Button.Parent = Menu_Frame
 MenuScaler_Button.InputBegan:Connect(function(Input, Process)
     if Process then return end
-    if (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+    if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
         UpdateSelected()
         Scaling = {
             True = true,
@@ -1222,7 +1233,7 @@ function Menu.Slider(Tab_Name: string, Container_Name: string, Name: string, Min
     ValueLabel.Parent = ValueBar
 
     Button.InputBegan:Connect(function(Input: InputObject, Process: boolean)
-        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
             Dragging = {Gui = Button, True = true}
             local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
             local Percentage = (InputPosition - Button.AbsolutePosition) / Button.AbsoluteSize
@@ -1233,15 +1244,26 @@ function Menu.Slider(Tab_Name: string, Container_Name: string, Name: string, Min
 
     UserInput.InputChanged:Connect(function(Input: InputObject, Process: boolean)
         if Dragging.Gui ~= Button then return end
-        if not (UserInput:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)) then
-            Dragging = {Gui = nil, True = false}
-            return
-        end
-        if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
+        if Input.UserInputType == Enum.UserInputType.Touch then
             local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
             local Percentage = (InputPosition - Button.AbsolutePosition) / Button.AbsoluteSize
             Slider:Update(Percentage.X)
             Slider.Callback(Slider.Value)
+        elseif Input.UserInputType == Enum.UserInputType.MouseMovement then
+            if not UserInput:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                Dragging = {Gui = nil, True = false}
+                return
+            end
+            local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
+            local Percentage = (InputPosition - Button.AbsolutePosition) / Button.AbsoluteSize
+            Slider:Update(Percentage.X)
+            Slider.Callback(Slider.Value)
+        end
+    end)
+
+    UserInput.InputEnded:Connect(function(Input: InputObject)
+        if Input.UserInputType == Enum.UserInputType.Touch and Dragging.Gui == Button then
+            Dragging = {Gui = nil, True = false}
         end
     end)
 
@@ -1478,7 +1500,7 @@ function Menu.ColorPicker(Tab_Name: string, Container_Name: string, Name: string
     end
 
     Saturation.InputBegan:Connect(function(Input: InputObject, Process: boolean)
-        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
             Dragging = {Gui = Saturation, True = true}
             local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
             local Percentage = (InputPosition - Saturation.AbsolutePosition) / Saturation.AbsoluteSize
@@ -1487,7 +1509,7 @@ function Menu.ColorPicker(Tab_Name: string, Container_Name: string, Name: string
     end)
 
     Alpha.InputBegan:Connect(function(Input: InputObject, Process: boolean)
-        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
             Dragging = {Gui = Alpha, True = true}
             local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
             local Percentage = (InputPosition - Alpha.AbsolutePosition) / Alpha.AbsoluteSize
@@ -1496,7 +1518,7 @@ function Menu.ColorPicker(Tab_Name: string, Container_Name: string, Name: string
     end)
 
     Hue.InputBegan:Connect(function(Input: InputObject, Process: boolean)
-        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+        if (not Dragging.Gui and not Dragging.True) and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
             Dragging = {Gui = Hue, True = true}
             local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
             local Percentage = (InputPosition - Hue.AbsolutePosition) / Hue.AbsoluteSize
@@ -1506,24 +1528,30 @@ function Menu.ColorPicker(Tab_Name: string, Container_Name: string, Name: string
 
     UserInput.InputChanged:Connect(function(Input: InputObject, Process: boolean)
         if (Dragging.Gui ~= Saturation and Dragging.Gui ~= Alpha and Dragging.Gui ~= Hue) then return end
-        if not (UserInput:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)) then
+        local isTouch = Input.UserInputType == Enum.UserInputType.Touch
+        local isMouse = Input.UserInputType == Enum.UserInputType.MouseMovement
+        if not isTouch and not isMouse then return end
+        if isMouse and not UserInput:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
             Dragging = {Gui = nil, True = false}
             return
         end
-
         local InputPosition = Vector2.new(Input.Position.X, Input.Position.Y)
-        if (Input.UserInputType == Enum.UserInputType.MouseMovement) then
-            if Dragging.Gui == Saturation then
-                local Percentage = (InputPosition - Saturation.AbsolutePosition) / Saturation.AbsoluteSize
-                UpdateSaturation(Percentage.X, Percentage.Y)
-            end
-            if Dragging.Gui == Alpha then
-                local Percentage = (InputPosition - Alpha.AbsolutePosition) / Alpha.AbsoluteSize
-                UpdateAlpha(Percentage.Y)
-            end
-            if Dragging.Gui == Hue then
-                local Percentage = (InputPosition - Hue.AbsolutePosition) / Hue.AbsoluteSize
-                UpdateHue(Percentage.Y)
+        if Dragging.Gui == Saturation then
+            local Percentage = (InputPosition - Saturation.AbsolutePosition) / Saturation.AbsoluteSize
+            UpdateSaturation(Percentage.X, Percentage.Y)
+        elseif Dragging.Gui == Alpha then
+            local Percentage = (InputPosition - Alpha.AbsolutePosition) / Alpha.AbsoluteSize
+            UpdateAlpha(Percentage.Y)
+        elseif Dragging.Gui == Hue then
+            local Percentage = (InputPosition - Hue.AbsolutePosition) / Hue.AbsoluteSize
+            UpdateHue(Percentage.Y)
+        end
+    end)
+
+    UserInput.InputEnded:Connect(function(Input: InputObject)
+        if Input.UserInputType == Enum.UserInputType.Touch then
+            if Dragging.Gui == Saturation or Dragging.Gui == Alpha or Dragging.Gui == Hue then
+                Dragging = {Gui = nil, True = false}
             end
         end
     end)
@@ -2649,8 +2677,11 @@ end
 function Menu:Init()
     UserInput.InputBegan:Connect(function(Input: InputObject, Process: boolean) end)
     UserInput.InputEnded:Connect(function(Input: InputObject)
-        if (Input.UserInputType == Enum.UserInputType.MouseButton1) then
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = {Gui = nil, True = false}
+            if Scaling.True then
+                Scaling = {True = false, Origin = nil, Size = nil}
+            end
         end
     end)
     RunService.RenderStepped:Connect(function(Step: number)
